@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: ../../../apps/api
+      dockerfile: Dockerfile
+    container_name: breakout-api
+    ports:
+      - "3001:3001"
+    environment:
+      NODE_ENV: development
+      PORT: 3001
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      DB_DATABASE: breakout
+      DB_SYNC: 'false'
+      DB_LOGGING: 'true'
+      JWT_SECRET: your_jwt_secret_key_here
+      JWT_EXPIRES_IN: 1d
+      SOLANA_NETWORK: devnet
+      SOLANA_RPC_ENDPOINT: https://api.devnet.solana.com
+      ESCROW_PROGRAM_ID: Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS
+    volumes:
+      - ../../../apps/api:/app
+      - /app/node_modules
+    depends_on:
+      - postgres
+    networks:
+      - breakout-network
+    command: npm run dev
+
+  postgres:
+    image: ankane/pgvector:latest
+    container_name: breakout-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: breakout
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ../../database/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - breakout-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: breakout-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - breakout-network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  breakout-network:
+    driver: bridge
