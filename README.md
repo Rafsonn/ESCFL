@@ -1,7 +1,3 @@
-# Breakout Platform
-
-A scalable, full-stack application with clear separation of concerns between frontend, backend, and blockchain components.
-
 ## Tech Stack
 
 ### Frontend
